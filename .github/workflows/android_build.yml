@@ -23,7 +23,7 @@ jobs:
           java-version: '21'
           distribution: 'zulu'
 
-      # 4. إعادة تهيئة وإصلاح ملفات بناء أندرويد بالمعرف النظيف الكامل
+      # 4. إعادة تهيئة وإصلاح ملفات بناء أندرويد
       - name: Overwrite Build Configurations
         run: |
           cat << 'EOF' > android/build.gradle
@@ -110,43 +110,13 @@ jobs:
           android.enableJetifier=true
           EOF
 
-          mkdir -p android/app/src/main/res/values
-          mkdir -p android/app/src/main/res/xml
-          
-          cat << 'EOF' > android/app/src/main/res/values/colors.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <color name="colorPrimary">#09162a</color>
-              <color name="colorPrimaryDark">#050d1a</color>
-              <color name="colorAccent">#007afc</color>
-          </resources>
-          EOF
-          
-          cat << 'EOF' > android/app/src/main/res/values/styles.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-                  <item name="colorPrimary">@color/colorPrimary</item>
-                  <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-                  <item name="colorAccent">@color/colorAccent</item>
-              </style>
-              <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
-                  <item name="windowActionBar">false</item>
-                  <item name="windowNoTitle">true</item>
-              </style>
-              <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
-                  <item name="android:background">@drawable/splash</item>
-              </style>
-          </resources>
-          EOF
-
       # 5. تثبيت حزم الاعتماديات
       - name: Install Project Dependencies
         run: |
           npm install --legacy-peer-deps
           npm install @capacitor/core@6.0.0 @capacitor/cli@6.0.0 @capacitor/android @capacitor/assets --legacy-peer-deps
 
-      # 6. ضبط إعدادات Vite للمسار المطلق
+      # 6. ضبط إعدادات Vite للمسارات النسبية (الحل الجوهري)
       - name: Optimize Vite Configuration
         run: |
           cat << 'EOF' > vite.config.ts
@@ -157,7 +127,7 @@ jobs:
           export default defineConfig(({ mode }) => {
               const env = loadEnv(mode, '.', '');
               return {
-                base: '/',
+                base: './',
                 server: {
                   port: 3000,
                   host: '0.0.0.0',
@@ -180,7 +150,7 @@ jobs:
       - name: Build Web Project
         run: npm run build
 
-      # 8. حقن كاشف الأخطاء المباشر التشخيصي
+      # 8. ضبط المسارات التشخيصية النسبية بدون تخريب المسار
       - name: Inject Network & Error Diagnostic Tracer
         run: |
           cat << 'EOF' > inject-tracer.cjs
@@ -189,51 +159,31 @@ jobs:
           if (fs.existsSync(file)) {
             let html = fs.readFileSync(file, "utf8");
             
-            html = html.replace(/src="\.\//g, 'src="/');
-            html = html.replace(/href="\.\//g, 'href="/');
-            
             const diagnosticScript = `
             <script>
               document.addEventListener("DOMContentLoaded", function() {
-                document.body.style.setProperty("background-color", "#4c0519", "important");
-                const debugDiv = document.createElement("div");
-                debugDiv.style.position = "fixed";
-                debugDiv.style.bottom = "0";
-                debugDiv.style.left = "0";
-                debugDiv.style.width = "100%";
-                debugDiv.style.background = "rgba(0,0,0,0.95)";
-                debugDiv.style.color = "#22c55e";
-                debugDiv.style.padding = "14px";
-                debugDiv.style.fontSize = "13px";
-                debugDiv.style.zIndex = "999999";
-                debugDiv.style.fontFamily = "monospace";
-                debugDiv.style.wordBreak = "break-all";
-                debugDiv.innerText = "Tracer Active: Waiting for React bundle execution...";
-                document.body.appendChild(debugDiv);
-                
                 window.addEventListener("error", function(e) {
-                  if (e.message) {
-                    debugDiv.style.color = "#ef4444";
-                    debugDiv.innerText = "❌ Runtime Crash: " + e.message + " at " + e.filename + ":" + e.lineno;
-                  }
-                });
-                
-                window.addEventListener("unhandledrejection", function(e) {
+                  const debugDiv = document.createElement("div");
+                  debugDiv.style.position = "fixed";
+                  debugDiv.style.bottom = "0";
+                  debugDiv.style.left = "0";
+                  debugDiv.style.width = "100%";
+                  debugDiv.style.background = "rgba(0,0,0,0.95)";
                   debugDiv.style.color = "#ef4444";
-                  debugDiv.innerText = "❌ Promise Crash: " + (e.reason ? (e.reason.message || e.reason) : "Unknown");
-                });
-
-                window.addEventListener("error", function(e) {
-                  if (e.target && (e.target.src || e.target.href)) {
-                    debugDiv.style.color = "#fbbf24";
-                    debugDiv.innerText = "⚠️ Resource 404 Mismatch: Failed to load [" + (e.target.src || e.target.href) + "]";
+                  debugDiv.style.padding = "14px";
+                  debugDiv.style.fontSize = "13px";
+                  debugDiv.style.zIndex = "999999";
+                  debugDiv.style.fontFamily = "monospace";
+                  debugDiv.style.wordBreak = "break-all";
+                  if (e.message) {
+                    debugDiv.innerText = "❌ Runtime Error: " + e.message;
+                    document.body.appendChild(debugDiv);
                   }
-                }, true);
+                });
               });
             </script>`;
             html = html.replace("<head>", "<head>" + diagnosticScript);
             fs.writeFileSync(file, html);
-            console.log("Advanced Network Tracer injected successfully.");
           }
           EOF
           node inject-tracer.cjs
@@ -269,7 +219,7 @@ jobs:
           rm -f capacitor.config.ts || true
           npx cap sync android
 
-      # 11. ضبط نصوص الهوية والتعريفات النظيفة
+      # 11. ضبط نصوص الهوية والتعريفات
       - name: Force Fix App Identity
         run: |
           mkdir -p android/app/src/main/res/values
