@@ -66,7 +66,7 @@ jobs:
           EOF
           npx cap sync android
 
-      # 7. ضبط متغيرات أندرويد النظيفة (API 35) بملف رسمي لمنع أخطاء Groovy
+      # 7. ضبط متغيرات أندرويد (API 35)
       - name: Set Clean Android Variables
         run: |
           cat << 'EOF' > android/variables.gradle
@@ -83,15 +83,22 @@ jobs:
           }
           EOF
 
-      # 8. توليد الأيقونات وصور الشاشة
-      - name: Generate App Icons and Assets
+      # 8. توليد الأيقونات وحذف الملفات المتعارضة تلقائياً
+      - name: Generate App Icons and Clean Duplicate Resources
         run: |
           mkdir -p assets
           [ -f icon.png ] && cp icon.png assets/icon.png || true
           [ -f logo.png ] && cp logo.png assets/logo.png || true
           [ -f background.png ] && cp background.png assets/splash.png || true
           [ -f background.png ] && cp background.png assets/splash-dark.png || true
+          
+          # حذف أي ملفات splash.xml سابقة لمنع التعارض مع splash.png
+          find android/app/src/main/res/ -name "splash.xml" -delete || true
+          
           npx @capacitor/assets generate --android || true
+          
+          # إزالة أي ملف XML تم إنشاؤه بالخطأ مجدداً
+          find android/app/src/main/res/ -name "splash.xml" -delete || true
 
       # 9. بناء الـ APK عبر Gradle
       - name: Build APK with Gradle
