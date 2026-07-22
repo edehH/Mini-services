@@ -22,11 +22,11 @@ jobs:
           java-version: '21'
           distribution: 'zulu'
 
-      # 3. تثبيت الاعتماديات
+      # 3. تثبيت الاعتماديات مع أداة الأيقونات
       - name: Install Dependencies
         run: |
           npm install --legacy-peer-deps
-          npm install @capacitor/core@6.0.0 @capacitor/cli@6.0.0 @capacitor/android --legacy-peer-deps
+          npm install @capacitor/core@6.0.0 @capacitor/cli@6.0.0 @capacitor/android@6.0.0 @capacitor/assets --legacy-peer-deps
 
       # 4. التأكد من ضبط مسارات Vite للعمل داخل أندرويد
       - name: Ensure Vite Relative Base
@@ -66,7 +66,23 @@ jobs:
           EOF
           npx cap sync android
 
-      # 7. بناء الـ APK عبر Gradle (توليد wrapper آلياً)
+      # 7. توليد الأيقونات (لحذف خطأ resource mipmap/ic_launcher not found)
+      - name: Generate App Icons and Assets
+        run: |
+          mkdir -p assets
+          [ -f icon.png ] && cp icon.png assets/icon.png || true
+          [ -f logo.png ] && cp logo.png assets/logo.png || true
+          [ -f background.png ] && cp background.png assets/splash.png || true
+          [ -f background.png ] && cp background.png assets/splash-dark.png || true
+          npx @capacitor/assets generate --android || true
+
+      # 8. إصلاح إصدار أندرويد إلى API 35 (لحذف خطأ VANILLA_ICE_CREAM)
+      - name: Upgrade Android Compile SDK to 35
+        run: |
+          sed -i 's/compileSdkVersion.*/compileSdkVersion 35/' android/app/build.gradle || true
+          sed -i 's/targetSdkVersion.*/targetSdkVersion 35/' android/app/build.gradle || true
+
+      # 9. بناء الـ APK عبر Gradle
       - name: Build APK with Gradle
         run: |
           cd android
@@ -74,7 +90,7 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      # 8. رفع الملف النهائي
+      # 10. رفع الملف النهائي
       - name: Upload Final APK
         uses: actions/upload-artifact@v4
         with:
