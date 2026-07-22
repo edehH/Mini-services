@@ -66,10 +66,11 @@ jobs:
           EOF
           npx cap sync android
 
-      # 7. بناء الـ APK عبر Gradle
+      # 7. بناء الـ APK عبر Gradle (توليد wrapper آلياً)
       - name: Build APK with Gradle
         run: |
           cd android
+          gradle wrapper --gradle-version 8.7
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
