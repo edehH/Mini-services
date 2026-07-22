@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ميني سرفيس | Mini-services</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="icon.png">
+    <style>
+        :root {
+            --emerald: #38bdf8; /* sky-400 */
+            --grass: #2563eb; /* blue-600 */
+            --amber: #60a5fa; /* blue-400 */
+            --royal: #1e3a8a; /* blue-900 */
+            --teal: #0284c7; /* sky-600 */
+        }
+
+        html, body { 
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #0f172a; /* Slate-900 dark background */
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            color: #ffffff;
+            -webkit-tap-highlight-color: transparent;
+            overflow: auto; /* Ensure scrollability */
+        }
+
+        /* 5-Color Animated Mesh Gradient Background */
+        .mesh-background {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -2;
+            background: 
+                radial-gradient(circle at 0% 0%, var(--emerald) 0%, transparent 55%),
+                radial-gradient(circle at 100% 0%, var(--royal) 0%, transparent 55%),
+                radial-gradient(circle at 100% 100%, var(--amber) 0%, transparent 55%),
+                radial-gradient(circle at 0% 100%, var(--teal) 0%, transparent 55%),
+                radial-gradient(circle at 50% 50%, var(--grass) 0%, transparent 55%);
+            background-color: #0f172a;
+            background-size: 200% 200%;
+            animation: meshSwirl 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes meshSwirl {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 50% 100%; }
+        }
+
+        .mesh-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background: rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+        }
+
+        #root {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .safe-area-pt { padding-top: max(1.5rem, env(safe-area-inset-top)); }
+        
+        @keyframes shake { 
+            0%, 100% { transform: translateX(0); } 
+            25% { transform: translateX(-5px); } 
+            75% { transform: translateX(5px); } 
+        } 
+        .animate-shake { animation: shake 0.2s ease-in-out 0s 2; }
+
+        /* Reverted Original Layout Card Styles */
+        .rider-card {
+            background: rgba(239, 246, 255, 0.95);
+            border-radius: 2.5rem;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            backdrop-filter: blur(8px);
+        }
+
+        .debt-inset {
+            background: white;
+            border-radius: 1.8rem;
+            border: 1px solid #e2e8f0;
+            padding: 0.8rem 1.2rem;
+            min-width: 100px;
+            text-align: center;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .view-transition {
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        ::-webkit-scrollbar { display: none; }
+        input::placeholder { color: rgba(0,0,0,0.3); }
+    </style>
+<script>
+      window.addEventListener('error', function(event) {
+        showCrashScreen('Error: ' + event.message + '\nSource: ' + event.filename + '\nLine: ' + event.lineno + ':' + event.colno);
+      });
+      window.addEventListener('unhandledrejection', function(event) {
+        showCrashScreen('Unhandled Rejection: ' + (event.reason ? (event.reason.stack || event.reason) : 'Unknown reason'));
+      });
+      function showCrashScreen(msg) {
+        var errDiv = document.getElementById('webview-crash-log');
+        if (!errDiv) {
+          errDiv = document.createElement('div');
+          errDiv.id = 'webview-crash-log';
+          errDiv.style.position = 'fixed';
+          errDiv.style.top = '0';
+          errDiv.style.left = '0';
+          errDiv.style.width = '100vw';
+          errDiv.style.height = '100vh';
+          errDiv.style.backgroundColor = '#0f172a';
+          errDiv.style.color = '#f87171';
+          errDiv.style.fontFamily = 'monospace';
+          errDiv.style.padding = '24px';
+          errDiv.style.boxSizing = 'border-box';
+          errDiv.style.zIndex = '999999';
+          errDiv.style.overflow = 'auto';
+          errDiv.style.direction = 'ltr';
+          errDiv.style.textAlign = 'left';
+          
+          var title = document.createElement('h2');
+          title.innerText = '⚠️ WebView Runtime Crash Detected';
+          title.style.color = '#f87171';
+          title.style.margin = '0 0 12px 0';
+          title.style.fontSize = '20px';
+          title.style.fontWeight = 'bold';
+          errDiv.appendChild(title);
+
+          var desc = document.createElement('p');
+          desc.innerText = 'An unhandled JavaScript or module loading error occurred inside the Android WebView container. Details below:';
+          desc.style.color = '#94a3b8';
+          desc.style.margin = '0 0 16px 0';
+          desc.style.fontSize = '14px';
+          errDiv.appendChild(desc);
+          
+          var code = document.createElement('pre');
+          code.id = 'webview-crash-code';
+          code.style.backgroundColor = '#1e293b';
+          code.style.padding = '16px';
+          code.style.borderRadius = '12px';
+          code.style.border = '1px solid #334155';
+          code.style.fontSize = '12px';
+          code.style.color = '#e2e8f0';
+          code.style.whiteSpace = 'pre-wrap';
+          code.style.wordBreak = 'break-all';
+          errDiv.appendChild(code);
+          
+          document.body.appendChild(errDiv);
+        }
+        document.getElementById('webview-crash-code').innerText += '\n' + msg;
+      }
+    </script>
+    <script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
+    "@capacitor/cli": "https://esm.sh/@capacitor/cli@^8.0.2",
+    "@capacitor/core": "https://esm.sh/@capacitor/core@^6.0.0",
+    "@capacitor/camera": "https://esm.sh/@capacitor/camera@^8.0.0",
+    "@capgo/capacitor-native-biometric": "https://esm.sh/@capgo/capacitor-native-biometric@^6.0.0",
+    "@ionic/pwa-elements/": "https://esm.sh/@ionic/pwa-elements@^3.3.0/"
+  }
+}
+</script>
+<script type="module">
+  import { defineCustomElements } from 'https://cdn.jsdelivr.net/npm/@ionic/pwa-elements/loader/index.js';
+  defineCustomElements(window);
+</script>
+<link rel="stylesheet" href="/src/index.css">
+</head>
+<body>
+    <div class="mesh-background"></div>
+    <div class="mesh-overlay"></div>
+    <div id="root"></div>
+<script type="module" src="/src/index.tsx"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "appId": "pro.miniservices.app",
+  "appName": "Mini-services",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "Camera": {
+      "permissions": [
+        "camera",
+        "photos"
+      ]
+    }
+  }
+}
