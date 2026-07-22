@@ -123,6 +123,8 @@ const CurrencyDisplay: React.FC<{ value: number | string, isOwner?: boolean, cla
   );
 };
 
+const DEFAULT_INITIAL_RIDERS: Rider[] = [];
+
 const App: React.FC = () => {
   const [view, setView] = useState<AppState>(AppState.SPLASH);
   const [riders, setRiders] = useState<Rider[]>([]);
@@ -491,14 +493,30 @@ const App: React.FC = () => {
       const savedRiders = localStorage.getItem('tawsila_riders');
       const savedArchive = localStorage.getItem('tawsila_archive');
       const savedExpenses = localStorage.getItem('tawsila_expenses');
-      if (savedRiders) setRiders(JSON.parse(savedRiders));
+      if (savedRiders) {
+        const parsed = JSON.parse(savedRiders);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setRiders(parsed);
+        } else {
+          setRiders(DEFAULT_INITIAL_RIDERS);
+        }
+      } else {
+        setRiders(DEFAULT_INITIAL_RIDERS);
+      }
       if (savedArchive) setArchive(JSON.parse(savedArchive));
       if (savedExpenses) setExpenses(JSON.parse(savedExpenses));
-    } catch (e) { console.error("Data load failed", e); }
+    } catch (e) { 
+      console.error("Data load failed", e); 
+      setRiders(DEFAULT_INITIAL_RIDERS);
+    }
 
-    NativeBiometric.isAvailable().then((result) => {
-      if (result.isAvailable) setBiometricsAvailable(true);
-    }).catch(() => setBiometricsAvailable(false));
+    try {
+      NativeBiometric.isAvailable().then((result) => {
+        if (result?.isAvailable) setBiometricsAvailable(true);
+      }).catch(() => setBiometricsAvailable(false));
+    } catch {
+      setBiometricsAvailable(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -631,7 +649,8 @@ const App: React.FC = () => {
     if (ridersWithPhotos.length === 0) return;
     setIsIdentifying(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const apiKey = process.env?.API_KEY || (import.meta as any)?.env?.VITE_GEMINI_API_KEY || '';
+      const ai = new GoogleGenAI({ apiKey });
       const parts: any[] = [];
       ridersWithPhotos.forEach(r => {
         const { mimeType: rMime, data: rBase64 } = extractBase64(r.photo!);
