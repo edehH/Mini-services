@@ -1,0 +1,299 @@
+name: Build Android APK
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. جلب ملفات المشروع من المستودع
+      - uses: actions/checkout@v4
+      
+      # 2. تهيئة بيئة تشغيل نود
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # 3. تثبيت بيئة جافا 21 المطلوبة للتجميع
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+
+      # 4. إعادة تهيئة وإصلاح ملفات بناء أندرويد بالمعرف النظيف الكامل
+      - name: Overwrite Build Configurations
+        run: |
+          cat << 'EOF' > android/build.gradle
+          buildscript {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:8.2.1'
+              }
+          }
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              configurations.all {
+                  resolutionStrategy {
+                      force "androidx.core:core:1.12.0"
+                      force "androidx.core:core-ktx:1.12.0"
+                      force "androidx.activity:activity:1.8.2"
+                      force "androidx.activity:activity-ktx:1.8.2"
+                      force "androidx.appcompat:appcompat:1.6.1"
+                  }
+              }
+          }
+          task clean(type: Delete) {
+              delete rootProject.buildDir
+          }
+          EOF
+
+          cat << 'EOF' > android/app/build.gradle
+          apply plugin: 'com.android.application'
+          android {
+              namespace "pro.miniservices.app"
+              compileSdkVersion 34
+              defaultConfig {
+                  applicationId "pro.miniservices.app"
+                  minSdkVersion 24
+                  targetSdkVersion 34
+                  versionCode 1
+                  versionName "1.0"
+                  testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+                  aaptOptions {
+                       ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+                  }
+              }
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_21
+                  targetCompatibility JavaVersion.VERSION_21
+              }
+          }
+          repositories {
+              flatDir {
+                  dirs 'libs'
+              }
+          }
+          dependencies {
+              implementation fileTree(dir: 'libs', include: ['*.jar'])
+              implementation "androidx.appcompat:appcompat:1.6.1"
+              implementation "androidx.coordinatorlayout:coordinatorlayout:1.2.0"
+              implementation "androidx.core:core:1.12.0"
+              implementation "androidx.activity:activity:1.8.2"
+              implementation project(':capacitor-android')
+              testImplementation "junit:junit:4.13.2"
+              androidTestImplementation "androidx.test.ext:junit:1.1.5"
+              androidTestImplementation "androidx.test.espresso:espresso-core:3.5.1"
+              if (findProject(':capacitor-cordova-android-plugins') != null) {
+                  implementation project(':capacitor-cordova-android-plugins')
+              }
+          }
+          apply from: 'capacitor.build.gradle'
+          EOF
+
+          cat << 'EOF' > android/gradle.properties
+          android.useAndroidX=true
+          android.enableJetifier=true
+          EOF
+
+          mkdir -p android/app/src/main/res/values
+          mkdir -p android/app/src/main/res/xml
+          
+          cat << 'EOF' > android/app/src/main/res/values/colors.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="colorPrimary">#09162a</color>
+              <color name="colorPrimaryDark">#050d1a</color>
+              <color name="colorAccent">#007afc</color>
+          </resources>
+          EOF
+          
+          cat << 'EOF' > android/app/src/main/res/values/styles.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+                  <item name="colorPrimary">@color/colorPrimary</item>
+                  <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+                  <item name="colorAccent">@color/colorAccent</item>
+              </style>
+              <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+                  <item name="windowActionBar">false</item>
+                  <item name="windowNoTitle">true</item>
+              </style>
+              <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
+                  <item name="android:background">@drawable/splash</item>
+              </style>
+          </resources>
+          EOF
+
+      # 5. تثبيت حزم الاعتماديات
+      - name: Install Project Dependencies
+        run: |
+          npm install --legacy-peer-deps
+          npm install @capacitor/core@6.0.0 @capacitor/cli@6.0.0 @capacitor/android @capacitor/assets --legacy-peer-deps
+
+      # 6. ضبط إعدادات Vite للمسار المطلق
+      - name: Optimize Vite Configuration
+        run: |
+          cat << 'EOF' > vite.config.ts
+          import path from 'path';
+          import { defineConfig, loadEnv } from 'vite';
+          import react from '@vitejs/plugin-react';
+
+          export default defineConfig(({ mode }) => {
+              const env = loadEnv(mode, '.', '');
+              return {
+                base: '/',
+                server: {
+                  port: 3000,
+                  host: '0.0.0.0',
+                },
+                plugins: [react()],
+                define: {
+                  'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+                  'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+                },
+                resolve: {
+                  alias: {
+                    '@': path.resolve(__dirname, '.'),
+                  }
+                }
+              };
+          });
+          EOF
+
+      # 7. بناء ملفات الويب عبر Vite
+      - name: Build Web Project
+        run: npm run build
+
+      # 8. حقن كاشف الأخطاء المباشر التشخيصي
+      - name: Inject Network & Error Diagnostic Tracer
+        run: |
+          cat << 'EOF' > inject-tracer.cjs
+          const fs = require("fs");
+          const file = "dist/index.html";
+          if (fs.existsSync(file)) {
+            let html = fs.readFileSync(file, "utf8");
+            
+            html = html.replace(/src="\.\//g, 'src="/');
+            html = html.replace(/href="\.\//g, 'href="/');
+            
+            const diagnosticScript = `
+            <script>
+              document.addEventListener("DOMContentLoaded", function() {
+                document.body.style.setProperty("background-color", "#4c0519", "important");
+                const debugDiv = document.createElement("div");
+                debugDiv.style.position = "fixed";
+                debugDiv.style.bottom = "0";
+                debugDiv.style.left = "0";
+                debugDiv.style.width = "100%";
+                debugDiv.style.background = "rgba(0,0,0,0.95)";
+                debugDiv.style.color = "#22c55e";
+                debugDiv.style.padding = "14px";
+                debugDiv.style.fontSize = "13px";
+                debugDiv.style.zIndex = "999999";
+                debugDiv.style.fontFamily = "monospace";
+                debugDiv.style.wordBreak = "break-all";
+                debugDiv.innerText = "Tracer Active: Waiting for React bundle execution...";
+                document.body.appendChild(debugDiv);
+                
+                window.addEventListener("error", function(e) {
+                  if (e.message) {
+                    debugDiv.style.color = "#ef4444";
+                    debugDiv.innerText = "❌ Runtime Crash: " + e.message + " at " + e.filename + ":" + e.lineno;
+                  }
+                });
+                
+                window.addEventListener("unhandledrejection", function(e) {
+                  debugDiv.style.color = "#ef4444";
+                  debugDiv.innerText = "❌ Promise Crash: " + (e.reason ? (e.reason.message || e.reason) : "Unknown");
+                });
+
+                window.addEventListener("error", function(e) {
+                  if (e.target && (e.target.src || e.target.href)) {
+                    debugDiv.style.color = "#fbbf24";
+                    debugDiv.innerText = "⚠️ Resource 404 Mismatch: Failed to load [" + (e.target.src || e.target.href) + "]";
+                  }
+                }, true);
+              });
+            </script>`;
+            html = html.replace("<head>", "<head>" + diagnosticScript);
+            fs.writeFileSync(file, html);
+            console.log("Advanced Network Tracer injected successfully.");
+          }
+          EOF
+          node inject-tracer.cjs
+          rm inject-tracer.cjs
+
+      # 9. توليد الأيقونات وصور الشاشة الترحيبية
+      - name: Process Custom User Images
+        run: |
+          rm -f android/app/src/main/res/drawable/splash.xml || true
+          rm -f android/app/src/main/res/drawable-v24/splash.xml || true
+          mkdir -p assets
+          cp icon.png assets/icon.png || true
+          cp logo.png assets/logo.png || true
+          cp background.png assets/splash.png || true
+          cp background.png assets/splash-dark.png || true
+          npx @capacitor/assets generate --android
+          rm -f android/app/src/main/res/drawable/splash.xml || true
+          rm -f android/app/src/main/res/drawable-v24/splash.xml || true
+
+      # 10. مزامنة الأصول وتوليد الإعدادات النظيفة
+      - name: Sync Web Assets to Android Project
+        run: |
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "pro.miniservices.app",
+            "appName": "Mini-services",
+            "webDir": "dist",
+            "server": {
+              "androidScheme": "https"
+            }
+          }
+          EOF
+          rm -f capacitor.config.ts || true
+          npx cap sync android
+
+      # 11. ضبط نصوص الهوية والتعريفات النظيفة
+      - name: Force Fix App Identity
+        run: |
+          mkdir -p android/app/src/main/res/values
+          cat << 'EOF' > android/app/src/main/res/values/strings.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Mini-services</string>
+              <string name="title_activity_main">Mini-services</string>
+              <string name="package_name">pro.miniservices.app</string>
+              <string name="custom_url_scheme">pro.miniservices.app</string>
+          </resources>
+          EOF
+
+      # 12. تجميع وبناء ملف الـ APK عبر محرك Gradle
+      - name: Build APK with Gradle
+        run: |
+          cd android
+          gradle wrapper --gradle-version 8.7
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      # 13. رفع ملف الـ APK النهائي
+      - name: Upload Final APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mini-Services-App
+          path: android/app/build/outputs/apk/debug/app-debug.apk
