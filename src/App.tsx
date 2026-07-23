@@ -815,16 +815,28 @@ const App: React.FC = () => {
   const Dashboard = () => (
     <div className="min-h-screen flex flex-col pb-24 safe-area-pt pt-6 view-transition">
       <div className="px-6 md:px-8 max-w-4xl mx-auto w-full">
-        <header className="flex justify-between items-center mb-10">
+        <header className="flex justify-between items-center mb-8">
           <div className="flex gap-3">
-            <button onClick={startScanner} className="w-14 h-14 bg-white/10 text-white rounded-full border border-white/20 flex items-center justify-center active:scale-90 shadow-xl backdrop-blur-md" title="التعرف بالوجه">
-              <ScanEye size={28} />
+            <button 
+              onClick={startScanner} 
+              className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-900/60 hover:bg-slate-900/80 text-white rounded-full border border-white/20 flex items-center justify-center active:scale-90 shadow-xl backdrop-blur-md transition-all" 
+              title="التعرف بالوجه"
+            >
+              <ScanEye size={26} className="text-white" />
             </button>
-            <button onClick={() => setShowBgSettings(true)} className="w-14 h-14 bg-white/10 text-white rounded-full border border-white/20 flex items-center justify-center active:scale-90 shadow-xl backdrop-blur-md" title="إعدادات مظهر الخلفية">
-              <Settings size={26} />
+            <button 
+              onClick={() => setShowBgSettings(true)} 
+              className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-900/60 hover:bg-slate-900/80 text-white rounded-full border border-white/20 flex items-center justify-center active:scale-90 shadow-xl backdrop-blur-md transition-all" 
+              title="إعدادات مظهر الخلفية"
+            >
+              <Settings size={24} className="text-white" />
             </button>
-            <button onClick={() => setShowNotifications(true)} className="w-14 h-14 bg-white/10 text-white rounded-full border border-white/20 flex items-center justify-center active:scale-90 shadow-xl backdrop-blur-md relative" title="مركز الإشعارات والمزاج المالي">
-              <Bell size={26} />
+            <button 
+              onClick={() => setShowNotifications(true)} 
+              className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-900/60 hover:bg-slate-900/80 text-white rounded-full border border-white/20 flex items-center justify-center active:scale-90 shadow-xl backdrop-blur-md relative transition-all" 
+              title="مركز الإشعارات والمزاج المالي"
+            >
+              <Bell size={24} className="text-white" />
               {balanceNotifications.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center animate-bounce border-2 border-slate-900 shadow-md">
                   {balanceNotifications.length}
@@ -834,14 +846,14 @@ const App: React.FC = () => {
           </div>
 
           <div className="text-center">
-            <h2 className="text-4xl font-black text-white leading-none tracking-tight">ميني سرفيس</h2>
+            <h2 className="text-3xl sm:text-4xl font-black text-white leading-none tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">ميني سرفيس</h2>
             <div className="flex items-center justify-center gap-2 mt-1">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/50">MINI-SERVICES</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/80 drop-shadow-md">MINI-SERVICES</span>
               <div className="w-1.5 h-1.5 bg-sky-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(56,189,248,0.8)]" />
             </div>
           </div>
 
-          <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center shadow-2xl overflow-hidden border-2 border-white/40 animate-pulse p-1">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-slate-900/60 rounded-2xl flex items-center justify-center shadow-2xl overflow-hidden border-2 border-white/40 p-1 backdrop-blur-md">
              <div className="w-full h-full bg-white/95 rounded-xl flex items-center justify-center shadow-inner overflow-hidden relative">
                 <img 
                   src={logoImg} 
@@ -857,21 +869,21 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <div className="relative mb-4">
-          <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-blue-900/30" size={24} />
+        <div className="relative mb-5">
+          <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-500" size={22} />
           <input 
             type="text" 
             placeholder="ابحث عن اسم السائق أو الرقم.." 
-            className="w-full rounded-full py-5 pr-14 pl-6 text-blue-900 font-bold outline-none bg-white/90 focus:bg-white transition-all shadow-2xl border border-white/30" 
+            className="w-full rounded-full py-4 sm:py-5 pr-14 pl-6 text-slate-900 font-black placeholder:text-slate-500/80 outline-none bg-white/95 focus:bg-white transition-all shadow-2xl border border-white/40 text-right" 
             value={searchQuery} 
             onChange={(e) => setSearchQuery(e.target.value)} 
           />
         </div>
 
         {/* Classification Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-4 scrollbar-none" dir="rtl">
-          <span className="text-white/60 font-black text-xs shrink-0 flex items-center gap-1 pl-1">
-            <Filter size={14} /> التصنيف:
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none" dir="rtl">
+          <span className="text-white font-black text-xs shrink-0 flex items-center gap-1 pl-1 drop-shadow-md">
+            <Filter size={14} className="text-white" /> التصنيف:
           </span>
           {[
             { id: 'ALL', label: 'الكل' },
@@ -887,8 +899,8 @@ const App: React.FC = () => {
               onClick={() => setClassificationFilter(tab.id)}
               className={`px-4 py-2 rounded-full font-black text-xs shrink-0 transition-all ${
                 classificationFilter === tab.id
-                  ? 'bg-white text-blue-900 shadow-lg scale-105'
-                  : 'bg-white/10 hover:bg-white/20 text-white border border-white/10'
+                  ? 'bg-white text-slate-900 shadow-xl scale-105 border border-white'
+                  : 'bg-slate-900/70 hover:bg-slate-900/90 text-white border border-white/20 backdrop-blur-md'
               }`}
             >
               {tab.label}
@@ -898,7 +910,7 @@ const App: React.FC = () => {
 
         <div className="space-y-4">
           {filteredRiders.length === 0 ? (
-            <div className="text-center py-12 bg-white/5 rounded-3xl border border-white/10 text-white/50">
+            <div className="text-center py-12 bg-slate-900/60 rounded-3xl border border-white/20 text-white/80 backdrop-blur-md shadow-xl">
               <p className="font-bold text-base">لا يوجد سائقون في هذه الفئة أو البحث.</p>
             </div>
           ) : (
@@ -988,18 +1000,26 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <div className="fixed bottom-10 left-10 flex flex-col gap-6 z-50">
-        <button onClick={handleBiometricUnlock} className="bg-white text-blue-900 w-16 h-16 rounded-full shadow-2xl active:scale-90 transition-transform flex items-center justify-center border-4 border-blue-50/20">
-          <Lock size={32} />
+      <div className="fixed bottom-10 left-10 flex flex-col gap-5 z-50">
+        <button 
+          onClick={handleBiometricUnlock} 
+          className="bg-white text-blue-950 w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)] active:scale-90 transition-transform flex items-center justify-center border-4 border-white/80 hover:bg-slate-50"
+          title="قفل Vault"
+        >
+          <Lock size={28} className="text-blue-950 stroke-[2.5]" />
         </button>
-        <button onClick={() => {
-          setNewRiderName('');
-          setNewRiderPhone('');
-          setRiderPhoto(null);
-          setIsRiderCameraActive(false);
-          setShowAddRider(true);
-        }} className="bg-white text-blue-900 w-16 h-16 rounded-full shadow-2xl active:scale-90 transition-transform flex items-center justify-center border-4 border-blue-50/20">
-          <UserPlus size={32} />
+        <button 
+          onClick={() => {
+            setNewRiderName('');
+            setNewRiderPhone('');
+            setRiderPhoto(null);
+            setIsRiderCameraActive(false);
+            setShowAddRider(true);
+          }} 
+          className="bg-white text-blue-950 w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)] active:scale-90 transition-transform flex items-center justify-center border-4 border-white/80 hover:bg-slate-50"
+          title="إضافة سائق جديد"
+        >
+          <UserPlus size={28} className="text-blue-950 stroke-[2.5]" />
         </button>
       </div>
     </div>
