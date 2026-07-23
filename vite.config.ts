@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
     build: {
       target: ['chrome60', 'firefox60', 'safari11', 'edge18', 'es2015'],
       cssTarget: ['chrome60', 'firefox60', 'safari11', 'edge18'],
+      cssCodeSplit: false,
     },
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY || ''),

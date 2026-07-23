@@ -1,7 +1,7 @@
 
+import './index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
 import App from './App';
 import { ErrorBoundary } from './ErrorBoundary';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
