@@ -172,7 +172,7 @@ const App: React.FC = () => {
   // Warning, Suspension & Driver Classification states
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [warningTargetRider, setWarningTargetRider] = useState<Rider | null>(null);
-  const [warningType, setWarningType] = useState<'suspension' | 'warning' | 'note'>('suspension');
+  const [warningType, setWarningType] = useState<'suspension' | 'warning' | 'note' | 'delete'>('suspension');
   const [warningDurationHours, setWarningDurationHours] = useState<number>(24);
   const [customHoursInput, setCustomHoursInput] = useState<string>('24');
   const [warningReasonText, setWarningReasonText] = useState<string>('');
@@ -341,6 +341,28 @@ const App: React.FC = () => {
 
   const handleApplyWarningOrSuspension = () => {
     if (!warningTargetRider) return;
+
+    if (warningType === 'delete') {
+      setConfirmConfig({
+        title: 'تأكيد حذف السائق نهائياً',
+        message: `⚠️ تحذير شديد الخطورة:\n\nهل أنت متأكد تماماً من حذف الكابتن (${warningTargetRider.name}) برقم الهاتف (${warningTargetRider.phone}) نهائياً من النظام ومسح كافة سجلاته ورحلاته؟\n\n• لا يمكن التراجع عن هذا الإجراء بعد تنفيذه.`,
+        confirmText: 'نعم، حذف السائق نهائياً',
+        cancelText: 'إلغاء التراجع',
+        isDanger: true,
+        onConfirm: () => {
+          setRiders(prev => (prev || []).filter(r => r.id !== warningTargetRider.id));
+          setShowConfirmModal(false);
+          setShowWarningModal(false);
+          if (selectedRiderId === warningTargetRider.id) {
+            setSelectedRiderId(null);
+            setView(AppState.DASHBOARD);
+          }
+        }
+      });
+      setShowConfirmModal(true);
+      return;
+    }
+
     if (!warningReasonText.trim()) {
       alert("يرجى كتابة سبب التنبيه أو التعليق الموجه للسائق.");
       return;
@@ -1692,10 +1714,16 @@ const App: React.FC = () => {
 
               <button 
                 onClick={() => {
-                  if(newRiderName && newRiderPhone) {
-                    const cleanedPhone = newRiderPhone.trim().replace(/\s/g, '');
-                    const finalName = cleanedPhone === '22261016' ? 'العبقري' : newRiderName.trim();
-                    setRiders([...riders, { 
+                  if (!newRiderName || !newRiderPhone) {
+                    alert("يرجى ملء كافة الحقول المطلوبة (الاسم الكامل ورقم الهاتف) لتسجيل السائق.");
+                    return;
+                  }
+
+                  const cleanedPhone = newRiderPhone.trim().replace(/\s/g, '');
+                  const finalName = cleanedPhone === '22261016' ? 'العبقري' : newRiderName.trim();
+
+                  const doAddRider = () => {
+                    setRiders(prev => [...(prev || []), { 
                       id: crypto.randomUUID(), 
                       name: finalName, 
                       phone: newRiderPhone.trim(), 
@@ -1705,12 +1733,52 @@ const App: React.FC = () => {
                     }]);
                     stopRiderCamera();
                     setShowAddRider(false);
+                    setShowConfirmModal(false);
+                  };
+
+                  if (!riderPhoto) {
+                    // Photo bypassed / skipped
+                    setConfirmConfig({
+                      title: "تأكيد التجاوز بدون صورة",
+                      message: `لم تقم بإضافة أو التقاط صورة شخصية للسائق (${finalName}). هل أنت متأكد من التجاوز بدون صورة وتثبيت السائق؟`,
+                      confirmText: "نعم، متأكد (تثبيت بدون صورة)",
+                      cancelText: "تراجع / التقاط صورة",
+                      isDanger: false,
+                      onConfirm: () => {
+                        setTimeout(() => {
+                          setConfirmConfig({
+                            title: "تأكيد تثبيت السائق",
+                            message: `هل أنت متأكد من تثبيت السائق (${finalName}) برقم الهاتف (${newRiderPhone.trim()}) في النظام؟`,
+                            confirmText: "تأكيد التثبيت النهائي",
+                            cancelText: "إلغاء",
+                            isDanger: false,
+                            onConfirm: () => {
+                              doAddRider();
+                            }
+                          });
+                          setShowConfirmModal(true);
+                        }, 100);
+                      }
+                    });
+                    setShowConfirmModal(true);
                   } else {
-                    alert("يرجى ملء كافة الحقول المطلوبة (الاسم الكامل ورقم الهاتف) لتسجيل السائق.");
+                    // Photo provided
+                    setConfirmConfig({
+                      title: "تأكيد تثبيت السائق",
+                      message: `هل أنت متأكد من تثبيت السائق (${finalName}) برقم الهاتف (${newRiderPhone.trim()}) في النظام؟`,
+                      confirmText: "تأكيد التثبيت",
+                      cancelText: "تراجع",
+                      isDanger: false,
+                      onConfirm: () => {
+                        doAddRider();
+                      }
+                    });
+                    setShowConfirmModal(true);
                   }
                 }} 
-                className="w-full py-4 bg-blue-600 text-white rounded-full font-black text-lg shadow-xl active:scale-95 transition-all border-b-4 border-blue-700 flex items-center justify-center gap-2"
+                className="w-full py-4 bg-blue-600 text-white rounded-full font-black text-lg shadow-xl active:scale-95 transition-all border-b-4 border-blue-700 flex items-center justify-center gap-2 cursor-pointer"
               >
+                <UserPlus size={22} />
                 <span>تثبيت السائق الجديد</span>
               </button>
               
@@ -2302,7 +2370,7 @@ const App: React.FC = () => {
             <div className="flex-1 overflow-y-auto space-y-6 pr-1 pl-1 mb-6">
               
               {/* Type Selection Tabs */}
-              <div className="grid grid-cols-3 gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/10">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/10">
                 <button
                   type="button"
                   onClick={() => { setWarningType('suspension'); setTargetClassification('موقوف مؤقتاً'); }}
@@ -2333,7 +2401,33 @@ const App: React.FC = () => {
                   <Award size={16} />
                   <span>تعديل التصنيف</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setWarningType('delete')}
+                  className={`py-3 rounded-xl font-black text-xs transition-all flex flex-col items-center gap-1 ${
+                    warningType === 'delete' ? 'bg-rose-700 text-white shadow-lg scale-105' : 'text-rose-400/80 hover:text-rose-300'
+                  }`}
+                >
+                  <Trash2 size={16} />
+                  <span>حذف السائق</span>
+                </button>
               </div>
+
+              {/* Deletion Warning Box (if type === 'delete') */}
+              {warningType === 'delete' && (
+                <div className="space-y-3 bg-rose-950/50 p-5 rounded-2xl border border-rose-500/40 text-right animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 text-rose-400 font-black text-sm">
+                    <Trash2 size={20} />
+                    <span>حذف السائق نهائياً من القائمة والتصنيف</span>
+                  </div>
+                  <p className="text-xs text-rose-200/90 leading-relaxed font-medium">
+                    سيتم مسح الكابتن (<span className="font-bold underline">{warningTargetRider.name}</span>) نهائياً من قاعدة البيانات، بالإضافة لمسح كافة الرحلات المفتوحة والسجلات المرتبطة به.
+                  </p>
+                  <div className="p-3 bg-black/40 rounded-xl border border-rose-500/20 text-[11px] text-rose-300 font-bold">
+                    ⚠️ ملحوظة: هذا الزر محمي داخل قائمة إدارة التصنيف ولن يظهر على القوائم العامة لمنع الحذف بالخطأ.
+                  </div>
+                </div>
+              )}
 
               {/* Suspension Duration Options (if type === 'suspension') */}
               {warningType === 'suspension' && (
@@ -2388,47 +2482,51 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* Driver Classification Selector */}
-              <div className="space-y-2">
-                <label className="text-xs font-black text-white/80 block">تصنيف الكابتن في النظام:</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {[
-                    { id: 'ممتاز', label: '🌟 ممتاز' },
-                    { id: 'جيد جداً', label: '👍 جيد جداً' },
-                    { id: 'جيد', label: '🟢 جيد' },
-                    { id: 'تحت الملاحظة', label: '⚠️ تحت الملاحظة' },
-                    { id: 'موقوف مؤقتاً', label: '🔴 موقوف مؤقتاً' },
-                    { id: 'مخالف', label: '🚫 مخالف' }
-                  ].map(cls => (
-                    <button
-                      key={cls.id}
-                      type="button"
-                      onClick={() => setTargetClassification(cls.id as DriverClassification)}
-                      className={`py-2.5 px-3 rounded-xl font-black text-xs transition-all border ${
-                        targetClassification === cls.id
-                          ? 'bg-blue-600 border-blue-400 text-white shadow-md'
-                          : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
-                      }`}
-                    >
-                      {cls.label}
-                    </button>
-                  ))}
+              {/* Driver Classification Selector (hide during deletion) */}
+              {warningType !== 'delete' && (
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-white/80 block">تصنيف الكابتن في النظام:</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {[
+                      { id: 'ممتاز', label: '🌟 ممتاز' },
+                      { id: 'جيد جداً', label: '👍 جيد جداً' },
+                      { id: 'جيد', label: '🟢 جيد' },
+                      { id: 'تحت الملاحظة', label: '⚠️ تحت الملاحظة' },
+                      { id: 'موقوف مؤقتاً', label: '🔴 موقوف مؤقتاً' },
+                      { id: 'مخالف', label: '🚫 مخالف' }
+                    ].map(cls => (
+                      <button
+                        key={cls.id}
+                        type="button"
+                        onClick={() => setTargetClassification(cls.id as DriverClassification)}
+                        className={`py-2.5 px-3 rounded-xl font-black text-xs transition-all border ${
+                          targetClassification === cls.id
+                            ? 'bg-blue-600 border-blue-400 text-white shadow-md'
+                            : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                        }`}
+                      >
+                        {cls.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Comment / Reason text area */}
-              <div className="space-y-2">
-                <label className="text-xs font-black text-white/80 block">
-                  {warningType === 'suspension' ? 'سبب التوقيف والتعليق الإداري:' : warningType === 'warning' ? 'نص التنبيه الرسمي الموجه للسائق:' : 'الملاحظة الإدارية:'}
-                </label>
-                <textarea 
-                  rows={3}
-                  value={warningReasonText}
-                  onChange={(e) => setWarningReasonText(e.target.value)}
-                  placeholder="اكتب التفاصيل والملاحظات هنا.."
-                  className="w-full rounded-2xl p-4 text-right font-medium text-sm text-white bg-white/5 border border-white/20 outline-none focus:border-amber-400 transition-all"
-                />
-              </div>
+              {/* Comment / Reason text area (hide during deletion) */}
+              {warningType !== 'delete' && (
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-white/80 block">
+                    {warningType === 'suspension' ? 'سبب التوقيف والتعليق الإداري:' : warningType === 'warning' ? 'نص التنبيه الرسمي الموجه للسائق:' : 'الملاحظة الإدارية:'}
+                  </label>
+                  <textarea 
+                    rows={3}
+                    value={warningReasonText}
+                    onChange={(e) => setWarningReasonText(e.target.value)}
+                    placeholder="اكتب التفاصيل والملاحظات هنا.."
+                    className="w-full rounded-2xl p-4 text-right font-medium text-sm text-white bg-white/5 border border-white/20 outline-none focus:border-amber-400 transition-all"
+                  />
+                </div>
+              )}
 
             </div>
 
@@ -2436,15 +2534,17 @@ const App: React.FC = () => {
             <button
               onClick={handleApplyWarningOrSuspension}
               className={`w-full py-4 rounded-2xl font-black text-md transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2 ${
-                warningType === 'suspension' 
-                  ? 'bg-red-600 hover:bg-red-500 text-white' 
-                  : warningType === 'warning' 
-                    ? 'bg-amber-600 hover:bg-amber-500 text-white' 
-                    : 'bg-blue-600 hover:bg-blue-500 text-white'
+                warningType === 'delete'
+                  ? 'bg-rose-700 hover:bg-rose-600 text-white border-b-4 border-rose-900'
+                  : warningType === 'suspension' 
+                    ? 'bg-red-600 hover:bg-red-500 text-white' 
+                    : warningType === 'warning' 
+                      ? 'bg-amber-600 hover:bg-amber-500 text-white' 
+                      : 'bg-blue-600 hover:bg-blue-500 text-white'
               }`}
             >
-              <Check size={20} />
-              <span>متابعة وتطبيق الإجراء</span>
+              {warningType === 'delete' ? <Trash2 size={20} /> : <Check size={20} />}
+              <span>{warningType === 'delete' ? 'حذف السائق نهائياً' : 'متابعة وتطبيق الإجراء'}</span>
             </button>
 
           </div>
