@@ -65,8 +65,8 @@ const extractBase64 = (dataUrl: string) => {
 const ClassificationBadge: React.FC<{ classification?: DriverClassification; isBanned?: boolean }> = ({ classification, isBanned }) => {
   if (isBanned) {
     return (
-      <span className="inline-flex items-center gap-1 bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-sm">
-        <AlertOctagon size={11} /> موقوف مؤقتاً
+      <span className="inline-flex items-center gap-1 bg-red-100 text-red-950 border border-red-300 text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-sm" style={{ color: '#450a0a', backgroundColor: '#fee2e2' }}>
+        <AlertOctagon size={12} className="text-red-700" style={{ color: '#b91c1c' }} /> موقوف مؤقتاً
       </span>
     );
   }
@@ -74,37 +74,37 @@ const ClassificationBadge: React.FC<{ classification?: DriverClassification; isB
   switch (classification) {
     case 'ممتاز':
       return (
-        <span className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-950 border border-emerald-300 text-[11px] font-black px-2.5 py-0.5 rounded-full" style={{ color: '#064e3b', backgroundColor: '#d1fae5' }}>
           🌟 ممتاز
         </span>
       );
     case 'جيد جداً':
       return (
-        <span className="inline-flex items-center gap-1 bg-sky-500/20 text-sky-400 border border-sky-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1 bg-sky-100 text-sky-950 border border-sky-300 text-[11px] font-black px-2.5 py-0.5 rounded-full" style={{ color: '#0c4a6e', backgroundColor: '#e0f2fe' }}>
           👍 جيد جداً
         </span>
       );
     case 'تحت الملاحظة':
       return (
-        <span className="inline-flex items-center gap-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1 bg-amber-200 text-amber-950 border border-amber-400 text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-sm" style={{ color: '#451a03', backgroundColor: '#fde68a' }}>
           ⚠️ تحت الملاحظة
         </span>
       );
     case 'مخالف':
       return (
-        <span className="inline-flex items-center gap-1 bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-950 border border-rose-300 text-[11px] font-black px-2.5 py-0.5 rounded-full" style={{ color: '#4c0519', backgroundColor: '#ffe4e6' }}>
           🚫 مخالف
         </span>
       );
     case 'موقوف مؤقتاً':
       return (
-        <span className="inline-flex items-center gap-1 bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1 bg-red-100 text-red-950 border border-red-300 text-[11px] font-black px-2.5 py-0.5 rounded-full" style={{ color: '#450a0a', backgroundColor: '#fee2e2' }}>
           🔴 موقوف مؤقتاً
         </span>
       );
     default:
       return (
-        <span className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-950 border border-emerald-300 text-[11px] font-black px-2.5 py-0.5 rounded-full" style={{ color: '#064e3b', backgroundColor: '#d1fae5' }}>
           🟢 جيد
         </span>
       );
@@ -886,7 +886,7 @@ const App: React.FC = () => {
         {/* Classification Filter Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none" dir="rtl">
           <span className="text-white font-black text-xs shrink-0 flex items-center gap-1 pl-1 drop-shadow-md">
-            <Filter size={14} className="text-white" /> التصنيف:
+            <Filter size={14} className="text-white" style={{ color: '#ffffff' }} /> التصنيف:
           </span>
           {[
             { id: 'ALL', label: 'الكل' },
@@ -896,19 +896,48 @@ const App: React.FC = () => {
             { id: 'تحت الملاحظة', label: '⚠️ تحت الملاحظة' },
             { id: 'موقوف مؤقتاً', label: '🔴 موقوف مؤقتاً' },
             { id: 'مخالف', label: '🚫 مخالف' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setClassificationFilter(tab.id)}
-              className={`px-4 py-2 rounded-full font-black text-xs shrink-0 transition-all ${
-                classificationFilter === tab.id
-                  ? 'bg-white text-slate-900 shadow-xl scale-105 border border-white'
-                  : 'bg-slate-900/70 hover:bg-slate-900/90 text-white border border-white/20 backdrop-blur-md'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ].map(tab => {
+            const isActive = classificationFilter === tab.id;
+            let activeStyle: React.CSSProperties = { color: '#020617', backgroundColor: '#ffffff' };
+            let activeClass = 'bg-white text-slate-950 font-bold text-xs whitespace-nowrap shadow-lg scale-105 border border-white';
+            
+            if (isActive) {
+              if (tab.id === 'تحت الملاحظة') {
+                activeClass = 'bg-amber-400 text-slate-950 font-black text-xs whitespace-nowrap shadow-lg scale-105 border border-amber-300';
+                activeStyle = { color: '#020617', backgroundColor: '#fbbf24' };
+              } else if (tab.id === 'موقوف مؤقتاً') {
+                activeClass = 'bg-rose-500 text-white font-black text-xs whitespace-nowrap shadow-lg scale-105 border border-rose-400';
+                activeStyle = { color: '#ffffff', backgroundColor: '#f43f5e' };
+              } else if (tab.id === 'مخالف') {
+                activeClass = 'bg-red-600 text-white font-black text-xs whitespace-nowrap shadow-lg scale-105 border border-red-500';
+                activeStyle = { color: '#ffffff', backgroundColor: '#dc2626' };
+              } else if (tab.id === 'ممتاز') {
+                activeClass = 'bg-emerald-400 text-slate-950 font-black text-xs whitespace-nowrap shadow-lg scale-105 border border-emerald-300';
+                activeStyle = { color: '#020617', backgroundColor: '#34d399' };
+              } else if (tab.id === 'جيد جداً') {
+                activeClass = 'bg-sky-400 text-slate-950 font-black text-xs whitespace-nowrap shadow-lg scale-105 border border-sky-300';
+                activeStyle = { color: '#020617', backgroundColor: '#38bdf8' };
+              } else if (tab.id === 'جيد') {
+                activeClass = 'bg-emerald-500 text-slate-950 font-black text-xs whitespace-nowrap shadow-lg scale-105 border border-emerald-400';
+                activeStyle = { color: '#020617', backgroundColor: '#10b981' };
+              }
+            }
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setClassificationFilter(tab.id)}
+                style={isActive ? activeStyle : { color: '#ffffff', backgroundColor: 'rgba(15, 23, 42, 0.8)' }}
+                className={`px-3.5 py-1.5 rounded-full shrink-0 transition-all cursor-pointer ${
+                  isActive
+                    ? activeClass
+                    : 'bg-slate-900/80 hover:bg-slate-900/95 text-white border border-white/20 backdrop-blur-md font-medium text-xs whitespace-nowrap shadow-md'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         <div className="space-y-4">
@@ -1003,13 +1032,14 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <div className="fixed bottom-10 left-10 flex flex-col gap-5 z-50">
+      <div className="fixed bottom-10 left-10 flex flex-col gap-4 z-50">
         <button 
           onClick={handleBiometricUnlock} 
-          className="bg-white text-blue-950 w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)] active:scale-90 transition-transform flex items-center justify-center border-4 border-white/80 hover:bg-slate-50"
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white shadow-2xl flex items-center justify-center border-2 border-slate-200 active:scale-90 transition-transform cursor-pointer"
+          style={{ backgroundColor: '#ffffff' }}
           title="قفل Vault"
         >
-          <Lock size={28} className="text-blue-950 stroke-[2.5]" />
+          <Lock size={26} className="text-slate-900 stroke-[2.5]" style={{ color: '#0f172a' }} />
         </button>
         <button 
           onClick={() => {
@@ -1019,10 +1049,11 @@ const App: React.FC = () => {
             setIsRiderCameraActive(false);
             setShowAddRider(true);
           }} 
-          className="bg-white text-blue-950 w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)] active:scale-90 transition-transform flex items-center justify-center border-4 border-white/80 hover:bg-slate-50"
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white shadow-2xl flex items-center justify-center border-2 border-slate-200 active:scale-90 transition-transform cursor-pointer"
+          style={{ backgroundColor: '#ffffff' }}
           title="إضافة سائق جديد"
         >
-          <UserPlus size={28} className="text-blue-950 stroke-[2.5]" />
+          <UserPlus size={26} className="text-slate-900 stroke-[2.5]" style={{ color: '#0f172a' }} />
         </button>
       </div>
     </div>
