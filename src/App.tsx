@@ -785,30 +785,33 @@ const App: React.FC = () => {
 
   // Views Implementation
   const SplashView = () => (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 view-transition">
-       <div className="w-56 h-56 bg-white/10 rounded-[3.5rem] border border-white/25 flex items-center justify-center mb-12 shadow-2xl backdrop-blur-md overflow-hidden p-3 animate-pulse">
-          <div className="w-full h-full bg-white/95 rounded-[2.8rem] flex items-center justify-center shadow-inner overflow-hidden relative">
-             <img 
-               src={logoImg} 
-               alt="Mini Services Logo" 
-               className="w-full h-full object-cover z-10 relative" 
-               onError={(e) => { e.currentTarget.style.display = 'none'; }} 
-               referrerPolicy="no-referrer" 
-             />
-             <div className="absolute inset-0 flex items-center justify-center bg-blue-900/10 text-blue-950 font-black text-6xl">
-               M
-             </div>
-          </div>
-       </div>
-       <h1 className="text-5xl font-black text-white mb-12 tracking-tighter drop-shadow-lg text-center">ميني سرفيس</h1>
-       
-       <button 
-        onClick={() => setView(AppState.DASHBOARD)}
-        className="w-full max-w-xs py-5 bg-white text-blue-900 rounded-full font-black text-xl flex items-center justify-center gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.3)] active:scale-95 transition-all"
-       >
-          <Fingerprint size={28} />
-          دخول
-       </button>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 sm:p-8 view-transition relative z-10">
+      <div className="bg-slate-950/60 backdrop-blur-md p-8 sm:p-10 rounded-[3rem] border border-white/20 shadow-2xl flex flex-col items-center max-w-sm w-full mx-auto">
+        <div className="w-44 h-44 sm:w-52 sm:h-52 bg-white/10 rounded-[3.5rem] border border-white/25 flex items-center justify-center mb-6 shadow-2xl backdrop-blur-md overflow-hidden p-3 animate-pulse">
+           <div className="w-full h-full bg-white/95 rounded-[2.8rem] flex items-center justify-center shadow-inner overflow-hidden relative">
+              <img 
+                src={logoImg} 
+                alt="Mini Services Logo" 
+                className="w-full h-full object-cover z-10 relative" 
+                onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+                referrerPolicy="no-referrer" 
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-blue-900/10 text-blue-950 font-black text-6xl" style={{ color: '#1e3a8a' }}>
+                M
+              </div>
+           </div>
+        </div>
+        <h1 className="text-3xl sm:text-4xl font-black text-white mb-8 tracking-wide drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] text-center">ميني سرفيس</h1>
+        
+        <button 
+          onClick={() => setView(AppState.DASHBOARD)}
+          className="w-full py-4 px-6 bg-white rounded-full font-black text-xl shadow-[0_15px_35px_rgba(0,0,0,0.4)] hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center gap-3 border-2 border-white/80 cursor-pointer"
+          style={{ color: '#0f172a', backgroundColor: '#ffffff' }}
+        >
+          <Fingerprint size={28} className="stroke-[2.5]" style={{ color: '#0f172a' }} />
+          <span className="font-black text-xl" style={{ color: '#0f172a' }}>دخول</span>
+        </button>
+      </div>
     </div>
   );
 
